@@ -66,6 +66,10 @@ python eagle/Embodied/evaluation/metrics/other_metric.py \
   --output_path results/D2City_val/modal/eval_results.json
 ```
 
+### Reproduced subset results
+
+On the 500-frame val subset (100 clips × 5 frames, 3,974 GT boxes), Modal inference scored **499/500** frames. At IoU=0.5: **P 0.669 · R 0.778 · F1 0.719**. See [README.md § Benchmark results](../README.md#benchmark-results-reproduced-subset) for full stats.
+
 ## Using another provider
 
 Modal is one option. Any host that can run the FastAPI app in `modal/app.py` (or equivalent) and expose `POST /detect` works with `scripts/run_modal_eval.py` — point `--url` at your endpoint.

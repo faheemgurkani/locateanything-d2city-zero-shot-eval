@@ -208,17 +208,86 @@ flowchart LR
 
 ---
 
-## Sample results (500-frame subset, Modal L40S)
+## Benchmark results (reproduced subset)
 
-At IoU=0.5 on D2-City val (499/500 frames; one timeout):
+The following numbers were obtained on the **recommended 500-frame validation subset** defined in `config/d2city_eval.yaml` (`frame_stride: 30`, `max_frames_per_video: 5`). Inference used **Modal** (deployed LocateAnything-3B API); metrics used the official [`other_metric.py`](eagle/Embodied/evaluation/metrics/other_metric.py) script.
+
+### Subset statistics
+
+| Stat | Value |
+|------|-------|
+| D2-City split | Validation (`0008`) |
+| Source clips (XML + MP4 pairs) | 100 |
+| Eval frames (JPEG) | 500 (5 per clip) |
+| Frame sampling | Every 30th frame (~1 fps from 30 fps source) |
+| Query classes | `car`, `bus`, `truck`, `person`, `bicycle`, `motorcycle` |
+| Ground-truth boxes (total) | **3,974** |
+| GT boxes by class | car 2,980 · person 330 · truck 228 · bus 205 · bicycle 155 · motorcycle 76 |
+| Extracted frames on disk | ~139 MB (`val/frames/0008/`) |
+| Eval JSONL | `D2City_val.jsonl` (500 entries) |
+
+Prepared with:
+
+```bash
+bash scripts/extract_d2city.sh val
+python scripts/prepare_d2city_jsonl.py
+# → 100 annotation files, 5 frames each, 500 total samples
+```
+
+### Inference run (Modal)
+
+| Stat | Value |
+|------|-------|
+| Provider | [Modal](https://modal.com/) — L40S GPU endpoint |
+| Model | [nvidia/LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B) |
+| Generation mode | `hybrid` |
+| Frames submitted | 500 |
+| Predictions written | **499** (1 HTTP 408 timeout) |
+| Failed frame | `val/frames/0008/9475a1f61b820da2d2b03f3dc1da4ee6/000030.jpg` |
+| Wall time | ~34 min (~4.1 s/frame avg) |
+| Smoke-test latency (1 frame) | ~1.2 s |
+| Predictions JSONL | `D2City_val_modal_answer.jsonl` |
+
+Batch command:
+
+```bash
+python scripts/run_modal_eval.py
+```
+
+Smoke test (auto-picks first JSONL frame — avoid shell `<hash>` placeholders in zsh):
+
+```bash
+python scripts/test_modal_client.py --url "$MODAL_API_URL" --from-jsonl
+```
+
+### Detection metrics (`other_metric.py`, 499 scored samples)
+
+| IoU threshold | Precision | Recall | F1 |
+|---------------|-----------|--------|-----|
+| **0.50** | **0.669** | **0.778** | **0.719** |
+| 0.90 | 0.077 | 0.088 | 0.082 |
+| **mIoU** (avg over 0.50–0.95) | **0.477** | **0.555** | **0.513** |
+
+Additional reported metrics at IoU=0.5:
 
 | Metric | Value |
 |--------|-------|
-| Precision | 0.669 |
-| Recall | 0.778 |
-| F1 | 0.719 |
+| Instance follow rate | 0.9965 |
+| Wrong rejection rate | 0.0000 |
 
-Output: `results/D2City_val/modal/eval_results.json`
+Metrics command:
+
+```bash
+pip install pycocotools shapely   # required once
+
+python eagle/Embodied/evaluation/metrics/other_metric.py \
+  --data_path "$(python scripts/paths.py modal-jsonl)" \
+  --output_path results/D2City_val/modal/eval_results.json
+```
+
+Full per-threshold breakdown is saved in [`results/D2City_val/modal/eval_results.json`](results/D2City_val/modal/eval_results.json).
+
+> **Note:** One timed-out frame can be retried by re-running `run_modal_eval.py` with `--limit 1` on the missing entry, or by increasing `modal.timeout_sec` in the config.
 
 ---
 
