@@ -6,6 +6,8 @@ Zero-shot evaluation of **pretrained [LocateAnything-3B](https://huggingface.co/
 
 This pipeline prepares D2-City frames, runs open-vocabulary detection via Modal (or local GPU), and computes box-level F1/recall metrics compatible with the official [NVlabs/Eagle](https://github.com/NVlabs/Eagle/tree/main/Embodied) evaluation scripts.
 
+**License:** This repository is released under the [MIT License](LICENSE).
+
 ---
 
 ## References
@@ -30,6 +32,7 @@ This pipeline prepares D2-City frames, runs open-vocabulary detection via Modal 
 ```
 locateanything-d2city-zero-shot-eval/
 ├── README.md
+├── LICENSE                    # MIT — see License section below
 ├── .gitignore
 ├── .env.example
 ├── config/
@@ -240,6 +243,11 @@ This repo produces a fixed JSONL (`D2City_val.jsonl`) with GT boxes. Fine-tuned 
 
 ## License
 
-- This evaluation harness: follow your repo license.
-- LocateAnything model & Eagle code: [NVIDIA license](https://huggingface.co/nvidia/LocateAnything-3B).
-- D2-City: [SciDB download](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) · [dataset terms](https://www.d2-city.org/)
+This repository (**locateanything-d2city-zero-shot-eval**) is licensed under the **MIT License**. See [LICENSE](LICENSE) for the full text.
+
+Copyright (c) 2026 Muhammad Faheem
+
+**Third-party components** (separate terms apply):
+
+- LocateAnything model & Eagle code: [NVIDIA license](https://huggingface.co/nvidia/LocateAnything-3B)
+- D2-City dataset: [SciDB download](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) · [dataset terms](https://www.d2-city.org/)
