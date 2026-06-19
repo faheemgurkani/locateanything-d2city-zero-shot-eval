@@ -18,7 +18,8 @@ This pipeline prepares D2-City frames, runs open-vocabulary detection via Modal 
 | Hugging Face demo Space | [huggingface.co/spaces/nvidia/LocateAnything](https://huggingface.co/spaces/nvidia/LocateAnything) |
 | Modal deployment pattern | [github.com/rohit4242/locateanything-modal](https://github.com/rohit4242/locateanything-modal) |
 | Modal docs (Volumes, Secrets) | [modal.com/docs](https://modal.com/docs) |
-| D2-City dataset | [d2-city.org](https://www.d2-city.org/) |
+| D2-City dataset (SciDB download) | [scidb.cn — D²-City](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) |
+| D2-City project page | [d2-city.org](https://www.d2-city.org/) |
 
 > **Note:** NVIDIA does not host a public REST API for LocateAnything. Inference is self-hosted (Modal, local GPU, RunPod, etc.) using the HF weights and Eagle eval code.
 
@@ -112,7 +113,7 @@ cp .env.example .env          # add MODAL_API_URL after deploy
 
 ### 3. D2-City data
 
-**Standalone:** set `paths.data_root_mode: local`, download zips per [data/README.md](data/README.md), place under `data/d2_city/`.
+**Standalone:** set `paths.data_root_mode: local`, download zips from [SciDB (D²-City)](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) per [data/README.md](data/README.md), place under `data/d2_city/`.
 
 **Monorepo:** keep default config; data lives in parent repo `data/d2_city/`.
 
@@ -241,4 +242,4 @@ This repo produces a fixed JSONL (`D2City_val.jsonl`) with GT boxes. Fine-tuned 
 
 - This evaluation harness: follow your repo license.
 - LocateAnything model & Eagle code: [NVIDIA license](https://huggingface.co/nvidia/LocateAnything-3B).
-- D2-City: [dataset terms](https://www.d2-city.org/).
+- D2-City: [SciDB download](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) · [dataset terms](https://www.d2-city.org/)
