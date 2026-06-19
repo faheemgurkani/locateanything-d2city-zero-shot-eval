@@ -1,0 +1,99 @@
+# D2-City zero-shot LocateAnything evaluation config
+# GitHub project: locateanything-d2city-zero-shot-eval
+
+# ---------------------------------------------------------------------------
+# Dataset path toggle (see README.md § Data layout and data/README.md)
+# ---------------------------------------------------------------------------
+paths:
+  # monorepo — use parent repo data/ (default; current nested layout)
+  # local    — use ./data/ at project root (standalone clone)
+  data_root_mode: monorepo
+
+  # Optional override (absolute path or relative to project root).
+  # When set, takes precedence over data_root_mode.
+  data_root: null
+
+  # Parent repo root from this project (only used when data_root_mode=monorepo)
+  repo_root: "../.."
+
+d2city:
+  raw_subdir: "d2_city"
+  processed_subdir: "d2_city/processed"
+
+  # Use validation split only for the article (annotated, held-out from training)
+  split: "val"  # val | train | test
+
+  # City folder inside each split (validation has one: 0008)
+  city_id: "0008"
+
+eval:
+  # Classes sent to LocateAnything as open-vocabulary queries
+  query_classes:
+    - car
+    - bus
+    - truck
+    - person
+    - bicycle
+    - motorcycle
+
+  # Map D2-City native labels → eval query class (GT side)
+  label_map:
+    car: car
+    van: car
+    bus: bus
+    truck: truck
+    forklift: truck
+    person: person
+    bicycle: bicycle
+    motorcycle: motorcycle
+    open-tricycle: motorcycle
+    closed-tricycle: motorcycle
+    large-block: null   # skip
+    small-block: null    # skip
+
+  # Frame sampling: extract every Nth frame that has ≥1 GT box in eval classes
+  # stride=30 ≈ 1 fps at 30 fps source video
+  frame_stride: 30
+
+  # Recommended subset: ~500 samples, ~4k GT boxes, ~175 MB JPEGs, ~33 min Modal GPU
+  # Profiles: default null (~2473) | recommended 5 (~500) | lighter 3 (~300)
+  max_frames_per_video: 5
+
+  # Minimum GT boxes in eval classes to include a frame
+  min_gt_boxes: 1
+
+  # LocateAnything eval metadata
+  dataset_name: "D2City"
+  task_name: "common_object_detection"
+
+model:
+  # Local path after: hf download nvidia/LocateAnything-3B --local-dir models/LocateAnything-3B
+  path: "models/LocateAnything-3B"
+
+  # hybrid (default) | fast | slow
+  generation_mode: "hybrid"
+
+  # Use la_flash batch runtime from HF model repo (recommended on A100/L40/H100)
+  use_batch_runtime: true
+  attn: "la_flash"
+  vision_attn: "flash_attention_2"
+
+inference:
+  gpus: 1          # 1 is enough for article; official scripts default to 8
+  batch_size: 1
+  max_new_tokens: 8192
+  # Resize long side down if OOM on smaller GPUs (null = native 1920×1080)
+  short_side_size: null
+
+output:
+  # Paths below are relative to data root (see paths.data_root_mode)
+  jsonl: "d2_city/processed/_annotations/box_eval/D2City_val.jsonl"
+  results_dir: "results/D2City_val"
+
+modal:
+  # Set after: python -m modal deploy modal/app.py
+  api_url: ""
+  output_jsonl: "d2_city/processed/_annotations/box_eval/D2City_val_modal_answer.jsonl"
+  generation_mode: "hybrid"
+  max_new_tokens: 8192
+  timeout_sec: 600
