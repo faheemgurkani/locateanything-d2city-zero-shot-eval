@@ -18,7 +18,7 @@ fi
 # shellcheck disable=SC1091
 source "${VENV}/bin/activate"
 pip install -U pip
-pip install "modal>=0.73.0" requests pyyaml tqdm pycocotools shapely
+pip install "modal>=0.73.0" requests pyyaml tqdm pycocotools shapely matplotlib
 
 echo ""
 echo "Modal client installed in ${VENV}."

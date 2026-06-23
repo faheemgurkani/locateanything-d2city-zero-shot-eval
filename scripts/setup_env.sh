@@ -28,7 +28,10 @@ FASTEVAL="${EMBODIED}/evaluation/fastevaluate"
 if [[ -d "${FASTEVAL}" ]]; then
   pip install -e "${FASTEVAL}"
 fi
-pip install shapely pyyaml tqdm opencv-python-headless
+pip install shapely pyyaml tqdm opencv-python-headless requests pycocotools matplotlib
+
+# --- Optional: install from requirements.txt for full replication ---
+# pip install -r "${ABLATION_ROOT}/requirements.txt"
 
 # --- Flash Attention 2 (recommended for la_flash / vision_attn) ---
 # Requires CUDA. Skip if no GPU driver on this machine.

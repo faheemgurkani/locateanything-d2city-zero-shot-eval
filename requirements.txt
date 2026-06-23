@@ -1,0 +1,17 @@
+# Core pipeline (Modal path + metrics)
+pyyaml>=6.0
+tqdm>=4.66
+opencv-python-headless>=4.8
+requests>=2.31
+pycocotools>=2.0.7
+shapely>=2.0
+
+# Modal deployment & batch eval
+modal>=0.73.0
+
+# Figure generation (article / reproducibility plots)
+matplotlib>=3.8
+numpy>=1.24
+
+# Hugging Face model download (local GPU path only)
+huggingface_hub[cli]>=0.23
