@@ -1,11 +1,8 @@
 # LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-
-**Muhammad Faheem**
-
 [Medium](https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5) · [Substack](https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language) · [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B) · [D²-City](https://www.scidb.cn/en/detail?dataSetId=804399692560465920)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
