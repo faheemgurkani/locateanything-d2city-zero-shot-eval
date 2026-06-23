@@ -1,10 +1,10 @@
 # LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video
 
+A zero-shot evaluation of LocateAnything-3B on D²-City, with no fine-tuning, no domain adaptation, just the pretrained model pointed at real traffic
+
 [Medium](https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5) · [Substack](https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language) · [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B) · [D²-City](https://www.scidb.cn/en/detail?dataSetId=804399692560465920)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-
----
 
 ## Abstract
 
@@ -13,8 +13,6 @@ We evaluate **pretrained [LocateAnything-3B](https://huggingface.co/nvidia/Locat
 **Research question:** *Does a generalist vision-language model work for driver assistance out of the box?*
 
 This repository provides the full pipeline: data preparation, Modal-based inference (or local GPU), metrics, and reproducibility figures.
-
----
 
 ## Main results
 
@@ -38,8 +36,6 @@ This repository provides the full pipeline: data preparation, Modal-based infere
 | Wall time (500 frames) | ~34 min |
 
 **Takeaway:** Strong coarse localization and near-perfect instance follow-through, but tight box accuracy and real-time throughput fall short of production ADAS requirements.
-
----
 
 ## Quick start
 
@@ -70,8 +66,6 @@ bash scripts/reproduce_results.sh --skip-modal   # if predictions exist, skip in
 bash scripts/reproduce_results.sh
 ```
 
----
-
 ## Installation
 
 | Requirement | Notes |
@@ -87,8 +81,6 @@ bash scripts/reproduce_results.sh
 bash scripts/setup_env.sh      # optional: venv + Eagle editable install
 bash scripts/setup_modal.sh    # Modal client deps
 ```
-
----
 
 ## Usage
 
@@ -129,8 +121,6 @@ bash scripts/run_zero_shot_eval.sh
 
 Requires CUDA + Flash Attention 2. See [Eagle/Embodied](https://github.com/NVlabs/Eagle/tree/main/Embodied).
 
----
-
 ## Configuration
 
 All paths and eval settings live in `config/d2city_eval.yaml`.
@@ -154,8 +144,6 @@ All paths and eval settings live in `config/d2city_eval.yaml`.
 
 Set `max_frames_per_video: null` for full validation (~2,473 frames).
 
----
-
 ## Dataset
 
 **D²-City** — large-scale Chinese dashcam dataset (1920×1080, CVAT XML annotations).
@@ -169,8 +157,6 @@ Set `max_frames_per_video: null` for full validation (~2,473 frames).
 | By class | car 2,980 · person 330 · truck 228 · bus 205 · bicycle 155 · motorcycle 76 |
 
 Download and layout: [data/README.md](data/README.md)
-
----
 
 ## Project structure
 
@@ -201,8 +187,6 @@ flowchart TD
   G --> H[render_all_figures.sh]
 ```
 
----
-
 ## Outputs
 
 | Artifact | Path |
@@ -211,8 +195,6 @@ flowchart TD
 | Predictions | `D2City_val_modal_answer.jsonl` |
 | Metrics | `results/D2City_val/modal/eval_results.json` |
 | Figures | `results/figures/*.png` |
-
----
 
 ## Troubleshooting
 
@@ -223,8 +205,6 @@ flowchart TD
 | Modal 408 timeout | Increase `modal.timeout_sec`; retry failed frame |
 | Wrong data path | `paths.data_root_mode: local` for standalone |
 | zsh `<hash>` error | Use `--from-jsonl` in test client |
-
----
 
 ## Citation & references
 
@@ -246,8 +226,6 @@ If you use this evaluation harness, please cite the articles and upstream work:
 | Modal deployment pattern | [rohit4242/locateanything-modal](https://github.com/rohit4242/locateanything-modal) (reference only; not cloned) |
 
 > NVIDIA does not host a public REST API for LocateAnything. Inference is self-hosted via Modal or local GPU.
-
----
 
 ## License
 
