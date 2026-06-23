@@ -1,5 +1,7 @@
 # locateanything-d2city-zero-shot-eval
 
+**Article:** [Can a Generalist Vision-Language Model See Traffic?](https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5) — Medium write-up of this zero-shot D²-City evaluation.
+
 Zero-shot evaluation of **pretrained [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B)** on **[D²-City](https://www.d2-city.org/)** dashcam validation data — no fine-tuning.
 
 **Research question:** Does LocateAnything work for driver assistance out of the box?
