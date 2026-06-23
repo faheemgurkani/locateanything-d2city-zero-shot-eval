@@ -1,18 +1,25 @@
 # LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video
 
-A zero-shot evaluation of LocateAnything-3B on D²-City, with no fine-tuning, no domain adaptation, just the pretrained model pointed at real traffic
+A zero-shot evaluation of LocateAnything-3B on D²-City, with no fine-tuning, no domain adaptation — just the pretrained model pointed at real traffic.
 
-[Medium](https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5) · [Substack](https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language) · [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B) · [D²-City](https://www.scidb.cn/en/detail?dataSetId=804399692560465920)
+## Overview
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+This repository provides:
 
-## Abstract
+- **`scripts/prepare_d2city_jsonl.py`** — Build a 500-frame D²-City validation subset with ground-truth boxes
+- **`scripts/run_modal_eval.py`** — Batch zero-shot inference via a self-hosted Modal API
+- **`scripts/reproduce_results.sh`** — End-to-end replication (data → inference → metrics → figures)
+- **`modal/app.py`** — FastAPI deployment for LocateAnything-3B on Modal (L40S)
 
-We evaluate **pretrained [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B)** zero-shot on **[D²-City](https://www.d2-city.org/)** dashcam validation footage — no fine-tuning, no domain adaptation. The model receives six open-vocabulary queries per frame (`car`, `bus`, `truck`, `person`, `bicycle`, `motorcycle`); predictions are scored with NVIDIA's official [`other_metric.py`](https://github.com/NVlabs/Eagle/tree/main/Embodied/evaluation/metrics/other_metric.py).
+The evaluation pipeline:
+
+1. Extract D²-City validation videos and annotations
+2. Sample frames and build LocateAnything-compatible JSONL
+3. Run open-vocabulary detection (`car`, `bus`, `truck`, `person`, `bicycle`, `motorcycle`)
+4. Score predictions with NVIDIA's official `other_metric.py`
+5. Generate reproducibility figures (IoU curve, latency, GT vs prediction)
 
 **Research question:** *Does a generalist vision-language model work for driver assistance out of the box?*
-
-This repository provides the full pipeline: data preparation, Modal-based inference (or local GPU), metrics, and reproducibility figures.
 
 ## Main results
 
@@ -37,72 +44,97 @@ This repository provides the full pipeline: data preparation, Modal-based infere
 
 **Takeaway:** Strong coarse localization and near-perfect instance follow-through, but tight box accuracy and real-time throughput fall short of production ADAS requirements.
 
-## Quick start
+## Prerequisites
+
+- Python 3.10+
+- Modal account (recommended inference path; no local GPU required)
+- Hugging Face account with LocateAnything-3B license accepted
+- NVlabs/Eagle clone for metrics (`git clone https://github.com/NVlabs/Eagle.git eagle`)
+- D²-City validation zips (~1.3 GB) — see Resources
+- ~2 GB disk for processed subset
+
+## Quick Start
+
+### 1. Clone repository
 
 ```bash
 git clone https://github.com/YOUR_USER/locateanything-d2city-zero-shot-eval.git
 cd locateanything-d2city-zero-shot-eval
 
 git clone https://github.com/NVlabs/Eagle.git eagle
-python3 -m venv .venv && source .venv/bin/activate
+```
+
+### 2. Create Python environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-1. Download D²-City val zips → `data/d2_city/` ([SciDB](https://www.scidb.cn/en/detail?dataSetId=804399692560465920)) — see [data/README.md](data/README.md)
-2. Set `paths.data_root_mode: local` in `config/d2city_eval.yaml` (standalone) or keep `monorepo` if nested in [driver-assistance-system-using-RT-DETR](https://github.com/)
-3. Prepare data → deploy Modal → run full pipeline:
+Or use setup helpers:
+
+```bash
+bash scripts/setup_env.sh
+bash scripts/setup_modal.sh
+```
+
+### 3. Download D²-City validation data
+
+Place archives under `data/d2_city/`:
+
+```
+data/d2_city/
+├── validation-annotation.zip
+└── validation-video.zip
+```
+
+For standalone clones, set `paths.data_root_mode: local` in `config/d2city_eval.yaml`. See [data/README.md](data/README.md).
+
+### 4. Prepare eval subset
 
 ```bash
 bash scripts/extract_d2city.sh val
 python scripts/prepare_d2city_jsonl.py
+```
 
-# One-time Modal setup — see modal/README.md
+Expected: **500 frames**, **3,974** ground-truth boxes.
+
+### 5. Deploy Modal API (one-time)
+
+```bash
 python -m modal run modal/download.py::download_model
 python -m modal deploy modal/app.py
 export MODAL_API_URL=https://YOUR-WORKSPACE--....modal.run
+```
 
-bash scripts/reproduce_results.sh --skip-modal   # if predictions exist, skip inference
-# or full run:
+See [modal/README.md](modal/README.md) for secrets and troubleshooting.
+
+### 6. Run full pipeline
+
+```bash
+python scripts/test_modal_client.py --url "$MODAL_API_URL" --from-jsonl
 bash scripts/reproduce_results.sh
 ```
 
-## Installation
-
-| Requirement | Notes |
-|-------------|-------|
-| Python 3.10+ | `pip install -r requirements.txt` |
-| NVlabs/Eagle | `git clone https://github.com/NVlabs/Eagle.git eagle` |
-| Hugging Face | Accept [LocateAnything-3B license](https://huggingface.co/nvidia/LocateAnything-3B) |
-| Modal account | Cloud inference — [modal.com](https://modal.com/) |
-| D²-City val zips | ~1.3 GB — [SciDB download](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) |
-| Disk | ~2 GB for processed subset |
-
-```bash
-bash scripts/setup_env.sh      # optional: venv + Eagle editable install
-bash scripts/setup_modal.sh    # Modal client deps
-```
+Runtime: ~34 min for 500 frames on Modal L40S (hybrid mode).
 
 ## Usage
 
 ### Data preparation
 
 ```bash
-bash scripts/extract_d2city.sh val
-python scripts/prepare_d2city_jsonl.py          # 500 frames, 3,974 GT boxes
-python scripts/prepare_d2city_jsonl.py --dry-run  # count only
-python scripts/paths.py all                       # verify resolved paths
+python scripts/prepare_d2city_jsonl.py --dry-run   # count only
+python scripts/paths.py all                       # verify paths
 ```
 
 ### Inference (Modal — recommended)
 
 ```bash
-python scripts/test_modal_client.py --url "$MODAL_API_URL" --from-jsonl
 python scripts/run_modal_eval.py --url "$MODAL_API_URL"
 ```
 
-Details: [modal/README.md](modal/README.md)
-
-### Metrics & figures
+### Metrics and figures
 
 ```bash
 python eagle/Embodied/evaluation/metrics/other_metric.py \
@@ -119,11 +151,11 @@ hf download nvidia/LocateAnything-3B --local-dir models/LocateAnything-3B
 bash scripts/run_zero_shot_eval.sh
 ```
 
-Requires CUDA + Flash Attention 2. See [Eagle/Embodied](https://github.com/NVlabs/Eagle/tree/main/Embodied).
+Requires CUDA + Flash Attention 2.
 
 ## Configuration
 
-All paths and eval settings live in `config/d2city_eval.yaml`.
+All settings in `config/d2city_eval.yaml`.
 
 **Data path toggle:**
 
@@ -156,24 +188,18 @@ Set `max_frames_per_video: null` for full validation (~2,473 frames).
 | GT boxes | 3,974 |
 | By class | car 2,980 · person 330 · truck 228 · bus 205 · bicycle 155 · motorcycle 76 |
 
-Download and layout: [data/README.md](data/README.md)
+## Key files
 
-## Project structure
-
-```
-├── config/d2city_eval.yaml
-├── scripts/
-│   ├── reproduce_results.sh      # end-to-end pipeline
-│   ├── render_all_figures.sh
-│   ├── extract_d2city.sh
-│   ├── prepare_d2city_jsonl.py
-│   ├── run_modal_eval.py
-│   └── run_zero_shot_eval.sh
-├── modal/                        # self-hosted FastAPI on Modal
-├── eagle/                        # gitignored — clone NVlabs/Eagle
-├── data/                         # gitignored
-└── results/                      # gitignored — metrics + figures
-```
+| File | Purpose |
+|------|---------|
+| `scripts/reproduce_results.sh` | End-to-end replication |
+| `scripts/render_all_figures.sh` | Regenerate article figures |
+| `scripts/extract_d2city.sh` | Unzip D²-City archives |
+| `scripts/prepare_d2city_jsonl.py` | Build eval JSONL + frames |
+| `scripts/run_modal_eval.py` | Batch Modal inference |
+| `scripts/run_zero_shot_eval.sh` | Local GPU inference + metrics |
+| `modal/app.py` | Modal FastAPI deployment |
+| `config/d2city_eval.yaml` | Paths, classes, sampling |
 
 ```mermaid
 flowchart TD
@@ -206,29 +232,64 @@ flowchart TD
 | Wrong data path | `paths.data_root_mode: local` for standalone |
 | zsh `<hash>` error | Use `--from-jsonl` in test client |
 
-## Citation & references
-
-If you use this evaluation harness, please cite the articles and upstream work:
+## Resources
 
 **Articles**
 
-- Faheem, M. *Can a Generalist Vision-Language Model See Traffic?* Medium, 2026. [Link](https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5)
-- Faheem, M. *LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video.* Substack, 2026. [Link](https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language)
+- Medium — *Can a Generalist Vision-Language Model See Traffic?*  
+  https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5
 
-**Upstream**
+- Substack — *LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video*  
+  https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language
 
-| Resource | Link |
-|----------|------|
-| LocateAnything | [Paper / project](https://research.nvidia.com/labs/lpr/locate-anything/) |
-| Model weights | [Hugging Face](https://huggingface.co/nvidia/LocateAnything-3B) |
-| Eval code | [NVlabs/Eagle](https://github.com/NVlabs/Eagle/tree/main/Embodied) |
-| D²-City | [SciDB](https://www.scidb.cn/en/detail?dataSetId=804399692560465920) · [Project](https://www.d2-city.org/) |
-| Modal deployment pattern | [rohit4242/locateanything-modal](https://github.com/rohit4242/locateanything-modal) (reference only; not cloned) |
+**LocateAnything**
+
+- Paper / project: https://research.nvidia.com/labs/lpr/locate-anything/
+- Model weights: https://huggingface.co/nvidia/LocateAnything-3B
+- Official code: https://github.com/NVlabs/Eagle/tree/main/Embodied
+- Hugging Face demo: https://huggingface.co/spaces/nvidia/LocateAnything
+
+**D²-City**
+
+- Download (SciDB): https://www.scidb.cn/en/detail?dataSetId=804399692560465920
+- Project page: https://www.d2-city.org/
+
+**Infrastructure**
+
+- Modal docs: https://modal.com/docs
+- Modal deployment pattern (reference only, not cloned): https://github.com/rohit4242/locateanything-modal
 
 > NVIDIA does not host a public REST API for LocateAnything. Inference is self-hosted via Modal or local GPU.
 
+## Citation
+
+If you use this evaluation harness or reference this work, please cite:
+
+```bibtex
+@article{faheem2026locateanything_medium,
+  title   = {Can a Generalist Vision-Language Model See Traffic?},
+  author  = {Faheem, Muhammad},
+  journal = {Medium},
+  year    = {2026},
+  url     = {https://medium.com/@faheemgurkani/can-a-generalist-vision-language-model-see-traffic-3ec6a85cf4d5}
+}
+
+@article{faheem2026locateanything_substack,
+  title   = {LocateAnything on Real Traffic: A Zero-Shot Evaluation on D²-City Dashcam Video},
+  author  = {Faheem, Muhammad},
+  journal = {The Representation Manifold (Substack)},
+  year    = {2026},
+  url     = {https://therepresentationmanifold.substack.com/p/can-a-generalist-vision-language}
+}
+```
+
+Please also cite the upstream LocateAnything model and D²-City dataset per their respective terms.
+
 ## License
 
-This repository: **[MIT](LICENSE)** (Copyright © 2026 Muhammad Faheem)
+`locateanything-d2city-zero-shot-eval` is **MIT** licensed, as found in the [LICENSE](LICENSE) file (Copyright © 2026 Muhammad Faheem).
 
-Third-party terms apply to [LocateAnything-3B](https://huggingface.co/nvidia/LocateAnything-3B) (NVIDIA) and [D²-City](https://www.d2-city.org/).
+This project follows the licensing of underlying components:
+
+- **LocateAnything-3B / Eagle:** NVIDIA non-commercial license — see [Hugging Face model card](https://huggingface.co/nvidia/LocateAnything-3B)
+- **D²-City:** Dataset terms — see [d2-city.org](https://www.d2-city.org/)
